@@ -7,11 +7,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
 <body>
-    <h2>Simple chat</h2>
-    <input type="text" id="userInput" placeholder="Your name" />
-    <input type="text" id="messageInput" placeholder="Your message" />
-    <button onclick="sendMessage()">Send</button>
+    <h2>Simple Private Chat</h2>
 
+    <label>Your Name:</label>
+    <input type="text" id="userInput" placeholder="Your name" />
+    <button onclick="register()">Register</button>
+    <br /><br />
+    
+    <label>Message:</label>
+    <input type="text" id="messageInput" placeholder="Your message" />
+    <button onclick="sendPublicMessage()">Send Public</button>
+    <br /><br />
+
+    <label>Private To (username):</label>
+    <input type="text" id="toUserInput" placeholder="Recipient name" />
+    <button onclick="sendPrivateMessage()">Send Private</button>
+
+    <h3>Messages:</h3>
     <ul id="messagesList"></ul>
 
     <script>
@@ -22,20 +34,44 @@
         
         // Receive message from server
         connection.on("ReceiveMessage", (user, message) => {
-            const li = document.createElement("li");
-            li.textContent = `${user}: ${message}`;
-            document.getElementById("messagesList").appendChild(li);
+            addMessage(`${user} (public): ${message}`);
+        });
+
+        connection.on("ReceivePrivateMessage", (fromUser, message) => {
+            addMessage(`${fromUser} (private): ${message}`);
         });
 
         // Start connection
         connection.start().catch(err => console.error(err.toString()));
 
+        function register() {
+            const user = document.getElementById("userInput").value;
+            connection.invoke("RegisterUser", user).catch(err => console.error(err.toString()));
+            addMessage(`Registered as ${user}`);
+        }
+
         // Send message to server
-        function sendMessage() {
+        function sendPublicMessage() {
             const user = document.getElementById("userInput").value;
             const message = document.getElementById("messageInput").value;
 
             connection.invoke("SendMessage", user, message).catch(err => console.error(err.toString()));
+        }
+
+        // Send private message to server
+        function sendPrivateMessage() {
+            const fromUser = document.getElementById("userInput").value;
+            const toUser = document.getElementById("toUserInput").value;
+            const message = document.getElementById("messageInput").value;
+
+            connection.invoke("SendPrivateMessage", fromUser, toUser, message)
+                .catch(err => console.error(err.toString()));
+        }
+
+        function addMessage(text) {
+            const li = document.createElement("li");
+            li.textContent = text;
+            document.getElementById("messagesList").appendChild(li);
         }
     </script>
 </body>
