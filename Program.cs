@@ -1,6 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using SignalRDemo;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add EF Core with SQLite
+builder.Services.AddDbContext<ChatDbContext>(options => options.UseSqlite("Data Source=Chat.db"));
 
 // Add SignalR
 builder.Services.AddSignalR();

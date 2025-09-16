@@ -54,6 +54,20 @@
             addMessage(`[${groupName}] ${fromUser}): ${message}`);
         });
 
+        connection.on("ReceiveHistory", (messages) => {
+            addMessage("---- Chat History ----");
+            messages.forEach(msg => {
+                if (msg.toUser) {
+                    addMessage(`${msg.user} (private to ${msg.toUser}): ${msg.message}`);
+                } else if (msg.group) {
+                    addMessage(`[${msg.group}] ${msg.user}: ${msg.message}`);
+                } else {
+                    addMessage(`${msg.user} (public): ${msg.message}`);
+                }
+            });
+            addMessage("---- End of History ----");
+        })
+
         // Start connection
         connection.start().catch(err => console.error(err.toString()));
 
