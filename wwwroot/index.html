@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SignalR chat demo</title>
+    <title>SignalR Chat Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
 <body>
-    <h2>Simple Private Chat</h2>
+    <h2>Simple Chat Demo</h2>
 
     <label>Your Name:</label>
     <input type="text" id="userInput" placeholder="Your name" />
@@ -22,7 +22,16 @@
     <label>Private To (username):</label>
     <input type="text" id="toUserInput" placeholder="Recipient name" />
     <button onclick="sendPrivateMessage()">Send Private</button>
+    <br /><br />
 
+    <label>Group Name:</label>
+    <input type="text" id="groupInput" placeholder="Group name" />
+    <button onclick="joinGroup()">Join Group</button>
+    <button onclick="leaveGroup()">Leave Group</button>
+    <br /><br />
+
+    <button onclick="sendGroupMessage()">Send Group Message</button>
+    
     <h3>Messages:</h3>
     <ul id="messagesList"></ul>
 
@@ -39,6 +48,10 @@
 
         connection.on("ReceivePrivateMessage", (fromUser, message) => {
             addMessage(`${fromUser} (private): ${message}`);
+        });
+
+        connection.on("ReceiveGroupMessage", (fromUser, groupName, message) => {
+            addMessage(`[${groupName}] ${fromUser}): ${message}`);
         });
 
         // Start connection
@@ -65,6 +78,29 @@
             const message = document.getElementById("messageInput").value;
 
             connection.invoke("SendPrivateMessage", fromUser, toUser, message)
+                .catch(err => console.error(err.toString()));
+        }
+
+        // --- GROUPS ---
+        function joinGroup() {
+            const group = document.getElementById("groupInput").value;
+            const user = document.getElementById("userInput").value;
+            connection.invoke("JoinGroup", group, user).catch(err => console.error(err.toString()));
+            addMessage(`Joined group: ${group}`);
+        }
+
+        function leaveGroup() {
+            const group = document.getElementById("groupInput").value;
+            connection.invoke("LeaveGroup", group).catch(err => console.error(err.toString()));
+            addMessage(`Left group: ${group}`);
+        }
+
+        function sendGroupMessage() {
+            const user = document.getElementById("userInput").value;
+            const group = document.getElementById("groupInput").value;
+            const message = document.getElementById("messageInput").value;
+
+            connection.invoke("SendGroupMessage", user, group, message)
                 .catch(err => console.error(err.toString()));
         }
 
