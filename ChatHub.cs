@@ -36,14 +36,7 @@ public class ChatHub : Hub
         return base.OnDisconnectedAsync(exception);
     }
 
-    /* Called by client to register a username
-    public Task RegisterUser(string userName)
-    {
-        _users[userName] = Context.ConnectionId;
-
-        return Task.CompletedTask;
-    }
-    */
+    /*
     public Task RegisterUser(string userName)
     {
         _users[userName] = Context.ConnectionId;
@@ -57,32 +50,20 @@ public class ChatHub : Hub
 
         return Clients.Caller.SendAsync("ReceiveHistory", recentMessages);
     }
-
-    /* Send a message to all clients
-    public async Task SendMessage(string user, string message)
-    {
-        // Broadcasts to all connected clients
-        await Clients.All.SendAsync("ReceiveMessage", user, message);
-    }
     */
-    public async Task SendMessage(string user, string message)
+    
+    public async Task SendMessage(string message)
     {
-        var chatMessage = new ChatMessage { User = user, Message = message };
+        // Get the username from the connection's identity; fallback to "Anonymous" if not authenticated
+        var userName = Context.User?.Identity?.Name ?? "Anonymous";
+        
+        var chatMessage = new ChatMessage { User = userName, Message = message };
         _dbContext.ChatMessages.Add(chatMessage);
         await _dbContext.SaveChangesAsync();
 
-        await Clients.All.SendAsync("ReceiveMessage", user, message);
+        await Clients.All.SendAsync("ReceiveMessage", userName, message);
     }
 
-    /* Send private message
-    public async Task SendPrivateMessage(string fromUser, string toUser, string message)
-    {
-        if (_users.TryGetValue(toUser, out var connectionId))
-        {
-            await Clients.Client(connectionId).SendAsync("ReceivePrivateMessage", fromUser, message);
-        }
-    }
-    */
     public async Task SendPrivateMessage(string fromUser, string toUser, string message)
     {
         if (_users.TryGetValue(toUser, out var connectionId))
@@ -114,18 +95,15 @@ public class ChatHub : Hub
             $"{Context.ConnectionId} left {groupName}");
     }
 
-    /*
-    public async Task SendGroupMessage(string user, string groupName, string message)
+    public async Task SendGroupMessage(string groupName, string message)
     {
-        await Clients.Group(groupName).SendAsync("ReceiveGroupMessage", user, groupName, message);
-    }
-    */
-    public async Task SendGroupMessage(string user, string groupName, string message)
-    {
-        var chatMessage = new ChatMessage { User = user, Message = message, Group = groupName };
+        // Get the username from the connection's identity; fallback to "Anonymous" if not authenticated
+        var userName = Context.User?.Identity?.Name ?? "Anonymous";
+
+        var chatMessage = new ChatMessage { User = userName, Message = message, Group = groupName };
         _dbContext.ChatMessages.Add(chatMessage);
         await _dbContext.SaveChangesAsync();
         
-        await Clients.Group(groupName).SendAsync("ReceiveGroupMessage", user, groupName, message);
+        await Clients.Group(groupName).SendAsync("ReceiveGroupMessage", userName, groupName, message);
     }
 }
